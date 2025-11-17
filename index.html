@@ -206,8 +206,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🧾 Groq Receipt Analyzer</h1>
-            <p>Upload your receipt image for instant text extraction with Open Source LLM</p>
+            <h1>🧾 ChatGPT Date/Time Extractor</h1>
+            <p>Upload your receipt image for instant date and time extraction with ChatGPT</p>
         </div>
 
         <div class="upload-area" id="uploadArea">
@@ -223,11 +223,11 @@
 
         <div class="processing" id="processing">
             <div class="spinner"></div>
-            <p>Extracting text with Groq AI...</p>
+            <p>Extracting date/time with ChatGPT...</p>
         </div>
 
         <div class="result" id="result">
-            <h3>📄 Extracted Text</h3>
+            <h3>📅 Extracted Date/Time</h3>
             <div id="resultContent"></div>
         </div>
 
@@ -334,10 +334,10 @@
                 const base64Image = await fileToBase64(file);
                 log('✅ Image converted successfully');
 
-                // Extract text with Groq API
-                log('🤖 Starting text extraction...');
-                const result = await extractTextWithGroq(base64Image, file.name, file.type);
-                log('✅ Text extraction completed');
+                // Extract date/time with ChatGPT
+                log('🤖 Starting ChatGPT date/time extraction...');
+                const result = await extractWithChatGPT(base64Image, file.name, file.type);
+                log('✅ ChatGPT extraction completed');
 
                 // Display results
                 displayResults(result);
@@ -350,9 +350,9 @@
             }
         }
 
-        // Groq text extraction function
-        async function extractTextWithGroq(base64Image, fileName, mimeType) {
-            const response = await fetch('/api/groq-analyzer', {
+        // ChatGPT date/time extraction function
+        async function extractWithChatGPT(base64Image, fileName, mimeType) {
+            const response = await fetch('/api/chatgpt', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -383,7 +383,7 @@
 
             resultContent.innerHTML = html;
             result.style.display = 'block';
-            log('🎉 Text extraction completed');
+            log('🎉 Date/Time extraction completed');
         }
 
         // Error handling
@@ -410,8 +410,8 @@
             consoleLog.style.display = consoleLog.style.display === 'none' ? 'block' : 'none';
         };
 
-        log('🚀 Groq Receipt Analyzer initialized');
-        log('🔗 Ready to call backend API');
+        log('🚀 ChatGPT Date/Time Extractor initialized');
+        log('🔗 Ready to call ChatGPT API');
     </script>
 </body>
 </html>
