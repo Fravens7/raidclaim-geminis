@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Receipt Analyzer</title>
+    <title>Groq Receipt Analyzer</title>
     <style>
         * {
             margin: 0;
@@ -206,8 +206,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🧾 Gemini Receipt Analyzer</h1>
-            <p>Upload your receipt image for instant AI analysis</p>
+            <h1>🧾 Groq Receipt Analyzer</h1>
+            <p>Upload your receipt image for instant AI analysis with Open Source LLM</p>
         </div>
 
         <div class="upload-area" id="uploadArea">
@@ -223,7 +223,7 @@
 
         <div class="processing" id="processing">
             <div class="spinner"></div>
-            <p>Analyzing receipt with Gemini AI...</p>
+            <p>Analyzing receipt with Groq AI...</p>
         </div>
 
         <div class="result" id="result">
@@ -247,22 +247,7 @@
         </div>
     </div>
 
-    <!-- Gemini AI SDK -->
-    <script type="importmap">
-    {
-        "imports": {
-            "@google/generative-ai": "https://esm.run/@google/generative-ai"
-        }
-    }
-    </script>
-    
-    <script type="module">
-        import { GoogleGenerativeAI } from "@google/generative-ai";
-
-        // Initialize Gemini with your API key
-        const API_KEY = "AIzaSyA4YdwmG-zHN4ETKMO7_utjOEfDvfKnsiA";
-        const genAI = new GoogleGenerativeAI(API_KEY);
-
+    <script>
         // DOM Elements
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
@@ -349,13 +334,13 @@
                 const base64Image = await fileToBase64(file);
                 log('✅ Image converted successfully');
 
-                // Process with Gemini
-                log('🤖 Starting Gemini analysis...');
-                const geminiResult = await analyzeWithGemini(base64Image, file.name);
-                log('✅ Gemini analysis completed');
+                // Process with Groq API (server-side)
+                log('🤖 Starting Groq analysis...');
+                const groqResult = await analyzeWithGroqAPI(base64Image, file.name, file.type);
+                log('✅ Groq analysis completed');
 
                 // Display results
-                displayResults(geminiResult);
+                displayResults(groqResult);
 
             } catch (err) {
                 log(`❌ Error: ${err.message}`);
@@ -365,68 +350,27 @@
             }
         }
 
-        // Gemini analysis function
-        async function analyzeWithGemini(base64Image, fileName) {
-            const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+        // Groq API function (calls your backend)
+        async function analyzeWithGroqAPI(base64Image, fileName, mimeType) {
+            const response = await fetch('/api/groq-analyzer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    image: base64Image,
+                    fileName: fileName,
+                    mimeType: mimeType
+                })
+            });
 
-            const prompt = `
-Analyze this receipt image from a service like a ride-sharing or food delivery app. 
-Extract the key information and respond in the requested JSON format.
-
-Focus on extracting:
-1. The name of the location, destination, or store
-2. The date of the transaction (e.g., "Nov 10")
-3. The time of the transaction (e.g., "3:30 PM")
-4. The total cost of the transaction
-5. The currency code
-6. The status of the transaction
-7. The type of activity
-
-Respond in JSON format with these fields:
-{
-  "title": "The name of the location, destination, or store",
-  "date": "The date of the transaction",
-  "time": "The time of the transaction",
-  "amount": "The total cost of the transaction",
-  "currency": "The currency code, e.g., 'LKR'",
-  "status": "The status of the transaction",
-  "type": "The type of activity (ride, tuktuk, delivery, or other)"
-}
-`;
-
-            const imagePart = {
-                inlineData: {
-                    data: base64Image,
-                    mimeType: 'image/jpeg'
-                }
-            };
-
-            const result = await model.generateContent([prompt, imagePart]);
-            const response = await result.response;
-            const text = response.text();
-
-            log(`📄 Raw Gemini Response: ${text.substring(0, 200)}...`);
-
-            // Parse JSON response
-            let geminiData = null;
-            try {
-                const jsonMatch = text.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    geminiData = JSON.parse(jsonMatch[0]);
-                } else {
-                    geminiData = JSON.parse(text);
-                }
-                log('✅ JSON parsed successfully');
-            } catch (e) {
-                log('⚠️ Could not parse response as JSON, using raw text');
-                geminiData = { 
-                    raw_response: text,
-                    error: 'Could not parse JSON'
-                };
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server error: ${response.status} - ${errorText}`);
             }
 
-            log(`📊 Parsed Data: ${JSON.stringify(geminiData, null, 2)}`);
-            return geminiData;
+            const data = await response.json();
+            return data.result;
         }
 
         // Display results
@@ -481,8 +425,8 @@ Respond in JSON format with these fields:
             consoleLog.style.display = consoleLog.style.display === 'none' ? 'block' : 'none';
         };
 
-        log('🚀 Gemini Receipt Analyzer initialized');
-        log('🔑 API Key configured and ready');
+        log('🚀 Groq Receipt Analyzer initialized');
+        log('🔗 Ready to call backend API');
     </script>
 </body>
 </html>
