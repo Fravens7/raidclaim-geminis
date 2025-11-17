@@ -16,46 +16,46 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing image data' });
     }
 
-    const apiKey = process.env.GROQ_API_KEY_IMAGES;
-    if (!apiKey) {
-      console.error("❌ No GROQ_API_KEY_IMAGES found in environment variables");
-      return res.status(500).json({ error: 'Missing GROQ API key' });
+    const hfApiKey = process.env.HUGGINGFACE_API_KEY;
+    if (!hfApiKey) {
+      console.error("❌ No HUGGINGFACE_API_KEY found in environment variables");
+      return res.status(500).json({ error: 'Missing Hugging Face API key' });
     }
 
-    const prompt = `Extract all text from this receipt image. Return only the extracted text, no analysis or formatting.`;
+    const dataUrl = `data:${mimeType || 'image/jpeg'};base64,${image}`;
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY_IMAGES}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant", // Open source model for text extraction
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.1,
-        max_tokens: 1024
-      }),
-    });
-
-    const text = await response.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      console.error("⚠️ GROQ no devolvió JSON:", text);
-      return res.status(500).json({ error: 'Invalid JSON response from GROQ' });
-    }
+    const response = await fetch(`https://api-inference.huggingface.co/models/nlpconnect/vit-gpt2-image-captioning`, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${hfApiKey}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            inputs: dataUrl,
+            parameters: {
+            max_new_tokens: 500
+            }
+        }),
+        });
 
     if (!response.ok) {
-      console.error("❌ GROQ API Error:", data);
-      return res.status(response.status).json({ error: data.error || 'GROQ API error' });
+      const errorText = await response.text();
+      console.error("❌ Hugging Face API Error:", errorText);
+      return res.status(response.status).json({ error: `Hugging Face API error: ${errorText}` });
     }
 
-    const extractedText = data.choices?.[0]?.message?.content || '';
+    const result = await response.json();
+    
+    // Extract text from Hugging Face response
+    let extractedText = '';
+    if (Array.isArray(result) && result.length > 0) {
+      extractedText = result[0]?.generated_text || '';
+    } else if (result.generated_text) {
+      extractedText = result.generated_text;
+    }
 
     return res.status(200).json({
-      extractedText: extractedText,
+      extractedText: extractedText || 'No text extracted',
       fileName: fileName
     });
 
