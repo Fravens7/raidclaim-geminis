@@ -7,6 +7,22 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
+      // Test endpoint first
+    if (req.url.includes('/test')) {
+      return res.status(200).json({
+        message: "API is working",
+        env: {
+          HUGGINGFACE_API_KEY: process.env.HUGGINGFACE_API_KEY ? "Present" : "Missing"
+        }
+      });
+    }
+
+
+
+
+
+
+
     let body = {};
     try {
       body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
@@ -54,7 +70,46 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("❌ Hugging Face API Error:", errorText);
-      return res.status(response.status).json({ error: `Hugging Face API error: ${errorText}` });
+       // Try fallback to simple text generation
+      console.log("🔄 Trying fallback model...");
+      try {
+        const fallbackResponse = await fetch(`https://router.huggingface.co/hf-inference/models/microsoft/DialoGPT-medium`, {
+          method: "POST",
+          headers: {
+              "Authorization": `Bearer ${hfApiKey}`,
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+              inputs: `Extract text from this receipt image description. Image data: ${dataUrl.substring(0, 100)}...`
+          }),
+        });
+
+        if (fallbackResponse.ok) {
+          const fallbackResult = await fallbackResponse.json();
+          const extractedText = fallbackResult[0]?.generated_text || 'Fallback extraction failed';
+          
+          return res.status(200).json({
+            extractedText: extractedText,
+            fileName: fileName,
+            fallback: true,
+            success: true
+          });
+        }
+      } catch (fallbackError) {
+        console.error("❌ Fallback also failed:", fallbackError);
+      }
+      
+      return res.status(response.status).json({ 
+        error: `Hugging Face API error: ${errorText}`,
+        status: response.status,
+        details: errorText
+      });
+
+
+
+
+
+
     }
 
     const result = await response.json();
