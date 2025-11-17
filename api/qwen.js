@@ -49,7 +49,33 @@ export default async function handler(req, res) {
             content: [
               {
                 type: "text",
-                text: "Extract ONLY the date and time from this receipt image. Return in format: 'Date: [date], Time: [time]'. Do not include any other information."
+                text: `Extract ALL trip information from this receipt image. This appears to be a ride-sharing or transport receipt with multiple trips.
+
+Please extract:
+1. Destination/Location names for ALL trips visible
+2. Date for each trip 
+3. Time for each trip
+4. Amount for each trip
+5. Currency
+6. Status of each trip
+7. Type of service (ride, tuktuk, delivery, etc.)
+
+Return in this JSON format:
+{
+  "trips": [
+    {
+      "destination": "Location name",
+      "date": "Nov 7", 
+      "time": "4:10 PM",
+      "amount": "450.00",
+      "currency": "LKR",
+      "status": "Completed",
+      "type": "ride"
+    }
+  ]
+}
+
+Extract ALL visible trips, not just the first one. Be thorough and capture every journey shown in the receipt.`
               },
               {
                 type: "image_url",
@@ -58,10 +84,9 @@ export default async function handler(req, res) {
                 }
               }
             ]
-          }
         ],
         temperature: 0.1,
-        max_tokens: 100
+        max_tokens: 1000
       }),
     });
 
@@ -77,16 +102,20 @@ export default async function handler(req, res) {
     console.log("📄 OpenRouter raw response:", result);
     
     const extractedText = result.choices?.[0]?.message?.content || '';
-    console.log("✅ Date/Time extracted:", extractedText);
+    console.log("✅ Text extracted successfully, length:", extractedText.length);
 
     return res.status(200).json({
-      extractedText: extractedText || 'No date/time extracted',
+      extractedText: extractedText || 'No text extracted',
       fileName: fileName,
       success: true
     });
 
   } catch (err) {
     console.error("💥 Server error:", err);
-    return res.status(500).json({ error: err.message });
+    console.error("💥 Error stack:", err.stack);
+    return res.status(500).json({ 
+      error: err.message,
+      stack: err.stack 
+    });
   }
 }
