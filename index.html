@@ -207,7 +207,7 @@
     <div class="container">
         <div class="header">
             <h1>🧾 Groq Receipt Analyzer</h1>
-            <p>Upload your receipt image for instant AI analysis with Open Source LLM</p>
+            <p>Upload your receipt image for instant text extraction with Open Source LLM</p>
         </div>
 
         <div class="upload-area" id="uploadArea">
@@ -223,11 +223,11 @@
 
         <div class="processing" id="processing">
             <div class="spinner"></div>
-            <p>Analyzing receipt with Groq AI...</p>
+            <p>Extracting text with Groq AI...</p>
         </div>
 
         <div class="result" id="result">
-            <h3>📊 Analysis Results</h3>
+            <h3>📄 Extracted Text</h3>
             <div id="resultContent"></div>
         </div>
 
@@ -334,13 +334,13 @@
                 const base64Image = await fileToBase64(file);
                 log('✅ Image converted successfully');
 
-                // Process with Groq API (server-side)
-                log('🤖 Starting Groq analysis...');
-                const groqResult = await analyzeWithGroqAPI(base64Image, file.name, file.type);
-                log('✅ Groq analysis completed');
+                // Extract text with Groq API
+                log('🤖 Starting text extraction...');
+                const result = await extractTextWithGroq(base64Image, file.name, file.type);
+                log('✅ Text extraction completed');
 
                 // Display results
-                displayResults(groqResult);
+                displayResults(result);
 
             } catch (err) {
                 log(`❌ Error: ${err.message}`);
@@ -350,8 +350,8 @@
             }
         }
 
-        // Groq API function (calls your backend)
-        async function analyzeWithGroqAPI(base64Image, fileName, mimeType) {
+        // Groq text extraction function
+        async function extractTextWithGroq(base64Image, fileName, mimeType) {
             const response = await fetch('/api/groq-analyzer', {
                 method: 'POST',
                 headers: {
@@ -370,35 +370,20 @@
             }
 
             const data = await response.json();
-            return data.result;
+            return data;
         }
 
         // Display results
         function displayResults(data) {
-            const fields = [
-                { label: 'Destination/Store', key: 'title' },
-                { label: 'Date', key: 'date' },
-                { label: 'Time', key: 'time' },
-                { label: 'Amount', key: 'amount' },
-                { label: 'Currency', key: 'currency' },
-                { label: 'Status', key: 'status' },
-                { label: 'Type', key: 'type' }
-            ];
-
-            let html = '';
-            fields.forEach(field => {
-                const value = data[field.key] || 'Not found';
-                html += `
-                    <div class="result-item">
-                        <span class="result-label">${field.label}:</span>
-                        <span class="result-value">${value}</span>
-                    </div>
-                `;
-            });
+            let html = `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 10px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+                    ${data.extractedText || 'No text extracted'}
+                </div>
+            `;
 
             resultContent.innerHTML = html;
             result.style.display = 'block';
-            log('🎉 Results displayed successfully');
+            log('🎉 Text extraction completed');
         }
 
         // Error handling

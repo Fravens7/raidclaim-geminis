@@ -22,34 +22,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Missing GROQ API key' });
     }
 
-    const dataUrl = `data:${mimeType || 'image/jpeg'};base64,${image}`;
-
-    const prompt = `
-Analyze this receipt image from a service like a ride-sharing or food delivery app. 
-Extract key information and respond in requested JSON format.
-
-Focus on extracting:
-1. The name of location, destination, or store
-2. The date of transaction (e.g., "Nov 10")
-3. The time of transaction (e.g., "3:30 PM")
-4. The total cost of transaction
-5. The currency code
-6. The status of transaction
-7. The type of activity
-
-Respond in JSON format with these fields:
-{
-  "title": "The name of location, destination, or store",
-  "date": "The date of transaction",
-  "time": "The time of transaction",
-  "amount": "The total cost of transaction",
-  "currency": "The currency code, e.g., 'LKR'",
-  "status": "The status of transaction",
-  "type": "The type of activity (ride, tuktuk, delivery, or other)"
-}
-
-Image: ${dataUrl}
-`;
+    const prompt = `Extract all text from this receipt image. Return only the extracted text, no analysis or formatting.`;
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -58,7 +31,7 @@ Image: ${dataUrl}
         "Authorization": `Bearer ${process.env.GROQ_API_KEY_IMAGES}`,
       },
       body: JSON.stringify({
-        model: "llama-3.2-90b-vision-preview", // Vision model
+        model: "llama-3.1-8b-instant", // Open source model for text extraction
         messages: [{ role: "user", content: prompt }],
         temperature: 0.1,
         max_tokens: 1024
@@ -79,26 +52,11 @@ Image: ${dataUrl}
       return res.status(response.status).json({ error: data.error || 'GROQ API error' });
     }
 
-    const responseText = data.choices?.[0]?.message?.content || '';
-    
-    // Parse JSON response
-    let groqData = null;
-    try {
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        groqData = JSON.parse(jsonMatch[0]);
-      } else {
-        groqData = JSON.parse(responseText);
-      }
-    } catch (e) {
-      groqData = { 
-        raw_response: responseText,
-        error: 'Could not parse JSON'
-      };
-    }
+    const extractedText = data.choices?.[0]?.message?.content || '';
 
     return res.status(200).json({
-      result: groqData,
+      extractedText: extractedText,
+      fileName: fileName
     });
 
   } catch (err) {
