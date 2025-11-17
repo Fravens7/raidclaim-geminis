@@ -37,7 +37,7 @@ export default async function handler(req, res) {
     console.log("🖼️ Data URL created, length:", dataUrl.length);
     console.log("📡 Calling Hugging Face API...");
     
-    const response = await fetch(`https://router.huggingface.co/hf-inference/models/microsoft/trocr-base-handwritten`, {
+    const response = await fetch(`https://router.huggingface.co/hf-inference/models/nlpcloud/vit-ocr-base-captcha-v2`, {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${hfApiKey}`,
