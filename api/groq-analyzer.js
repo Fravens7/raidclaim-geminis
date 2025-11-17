@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     console.log("🖼️ Data URL created, length:", dataUrl.length);
     console.log("📡 Calling Hugging Face API...");
 
-    const response = await fetch(`https://router.huggingface.co/hf-inference/models/nlpconnect/vit-gpt2-image-captioning`, {
+    const response = await fetch(`https://router.huggingface.co/hf-inference/models/Salesforce/blip-image-captioning-base`, {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${hfApiKey}`,
