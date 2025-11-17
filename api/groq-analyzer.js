@@ -58,7 +58,7 @@ Image: ${dataUrl}
         "Authorization": `Bearer ${process.env.GROQ_API_KEY_IMAGES}`,
       },
       body: JSON.stringify({
-        model: "llava-v1.5-7b-4096-preview", // Vision model
+        model: "llama-3.2-90b-vision-preview", // Vision model
         messages: [{ role: "user", content: prompt }],
         temperature: 0.1,
         max_tokens: 1024
