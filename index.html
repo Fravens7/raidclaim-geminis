@@ -1,1 +1,488 @@
-xd
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Receipt Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e8efff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .processing {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .result h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .result-value {
+            color: #333;
+        }
+
+        .error {
+            display: none;
+            background: #fee;
+            border: 1px solid #fcc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            color: #c33;
+        }
+
+        .preview {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .console-log {
+            display: none;
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            margin-left: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧾 Gemini Receipt Analyzer</h1>
+            <p>Upload your receipt image for instant AI analysis</p>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📸</div>
+            <div class="upload-text">Select Image</div>
+            <div class="upload-subtext">or drag and drop your receipt here</div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="preview" id="preview">
+            <img id="previewImage" alt="Receipt preview">
+        </div>
+
+        <div class="processing" id="processing">
+            <div class="spinner"></div>
+            <p>Analyzing receipt with Gemini AI...</p>
+        </div>
+
+        <div class="result" id="result">
+            <h3>📊 Analysis Results</h3>
+            <div id="resultContent"></div>
+        </div>
+
+        <div class="console-log" id="consoleLog">
+            <strong>🔍 Console Output:</strong>
+            <div id="consoleContent"></div>
+        </div>
+
+        <div class="error" id="error">
+            <strong>❌ Error:</strong>
+            <div id="errorContent"></div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn" onclick="resetUpload()">Upload New Receipt</button>
+            <button class="btn btn-secondary" onclick="toggleConsole()">Toggle Console</button>
+        </div>
+    </div>
+
+    <!-- Gemini AI SDK -->
+    <script type="importmap">
+    {
+        "imports": {
+            "@google/generative-ai": "https://esm.run/@google/generative-ai"
+        }
+    }
+    </script>
+    
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        // Initialize Gemini with your API key
+        const API_KEY = "AIzaSyA4YdwmG-zHN4ETKMO7_utjOEfDvfKnsiA";
+        const genAI = new GoogleGenerativeAI(API_KEY);
+
+        // DOM Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const processing = document.getElementById('processing');
+        const result = document.getElementById('result');
+        const error = document.getElementById('error');
+        const preview = document.getElementById('preview');
+        const previewImage = document.getElementById('previewImage');
+        const resultContent = document.getElementById('resultContent');
+        const errorContent = document.getElementById('errorContent');
+        const consoleLog = document.getElementById('consoleLog');
+        const consoleContent = document.getElementById('consoleContent');
+
+        // Console logging
+        function log(message) {
+            console.log(message);
+            const timestamp = new Date().toLocaleTimeString();
+            consoleContent.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+
+        // File upload handlers
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Convert file to base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Main processing function
+        async function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Please select an image file');
+                return;
+            }
+
+            log(`📁 Processing file: ${file.name}`);
+            log(`📏 File size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+
+            // Show preview
+            previewImage.src = URL.createObjectURL(file);
+            preview.style.display = 'block';
+
+            // Show processing
+            uploadArea.style.display = 'none';
+            processing.style.display = 'block';
+            error.style.display = 'none';
+            result.style.display = 'none';
+
+            try {
+                // Convert to base64
+                log('🔄 Converting image to base64...');
+                const base64Image = await fileToBase64(file);
+                log('✅ Image converted successfully');
+
+                // Process with Gemini
+                log('🤖 Starting Gemini analysis...');
+                const geminiResult = await analyzeWithGemini(base64Image, file.name);
+                log('✅ Gemini analysis completed');
+
+                // Display results
+                displayResults(geminiResult);
+
+            } catch (err) {
+                log(`❌ Error: ${err.message}`);
+                showError(err.message);
+            } finally {
+                processing.style.display = 'none';
+            }
+        }
+
+        // Gemini analysis function
+        async function analyzeWithGemini(base64Image, fileName) {
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+
+            const prompt = `
+Analyze this receipt image from a service like a ride-sharing or food delivery app. 
+Extract the key information and respond in the requested JSON format.
+
+Focus on extracting:
+1. The name of the location, destination, or store
+2. The date of the transaction (e.g., "Nov 10")
+3. The time of the transaction (e.g., "3:30 PM")
+4. The total cost of the transaction
+5. The currency code
+6. The status of the transaction
+7. The type of activity
+
+Respond in JSON format with these fields:
+{
+  "title": "The name of the location, destination, or store",
+  "date": "The date of the transaction",
+  "time": "The time of the transaction",
+  "amount": "The total cost of the transaction",
+  "currency": "The currency code, e.g., 'LKR'",
+  "status": "The status of the transaction",
+  "type": "The type of activity (ride, tuktuk, delivery, or other)"
+}
+`;
+
+            const imagePart = {
+                inlineData: {
+                    data: base64Image,
+                    mimeType: 'image/jpeg'
+                }
+            };
+
+            const result = await model.generateContent([prompt, imagePart]);
+            const response = await result.response;
+            const text = response.text();
+
+            log(`📄 Raw Gemini Response: ${text.substring(0, 200)}...`);
+
+            // Parse JSON response
+            let geminiData = null;
+            try {
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    geminiData = JSON.parse(jsonMatch[0]);
+                } else {
+                    geminiData = JSON.parse(text);
+                }
+                log('✅ JSON parsed successfully');
+            } catch (e) {
+                log('⚠️ Could not parse response as JSON, using raw text');
+                geminiData = { 
+                    raw_response: text,
+                    error: 'Could not parse JSON'
+                };
+            }
+
+            log(`📊 Parsed Data: ${JSON.stringify(geminiData, null, 2)}`);
+            return geminiData;
+        }
+
+        // Display results
+        function displayResults(data) {
+            const fields = [
+                { label: 'Destination/Store', key: 'title' },
+                { label: 'Date', key: 'date' },
+                { label: 'Time', key: 'time' },
+                { label: 'Amount', key: 'amount' },
+                { label: 'Currency', key: 'currency' },
+                { label: 'Status', key: 'status' },
+                { label: 'Type', key: 'type' }
+            ];
+
+            let html = '';
+            fields.forEach(field => {
+                const value = data[field.key] || 'Not found';
+                html += `
+                    <div class="result-item">
+                        <span class="result-label">${field.label}:</span>
+                        <span class="result-value">${value}</span>
+                    </div>
+                `;
+            });
+
+            resultContent.innerHTML = html;
+            result.style.display = 'block';
+            log('🎉 Results displayed successfully');
+        }
+
+        // Error handling
+        function showError(message) {
+            errorContent.textContent = message;
+            error.style.display = 'block';
+            processing.style.display = 'none';
+        }
+
+        // Reset function
+        window.resetUpload = function() {
+            uploadArea.style.display = 'block';
+            processing.style.display = 'none';
+            result.style.display = 'none';
+            error.style.display = 'none';
+            preview.style.display = 'none';
+            fileInput.value = '';
+            consoleContent.innerHTML = '';
+            consoleLog.style.display = 'none';
+        };
+
+        // Toggle console
+        window.toggleConsole = function() {
+            consoleLog.style.display = consoleLog.style.display === 'none' ? 'block' : 'none';
+        };
+
+        log('🚀 Gemini Receipt Analyzer initialized');
+        log('🔑 API Key configured and ready');
+    </script>
+</body>
+</html>
