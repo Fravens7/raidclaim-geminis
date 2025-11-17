@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Groq Receipt Analyzer</title>
+    <title>Qwen2.5 Receipt Analyzer</title>
     <style>
         * {
             margin: 0;
@@ -206,8 +206,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🧾 ChatGPT Date/Time Extractor</h1>
-            <p>Upload your receipt image for instant date and time extraction with ChatGPT</p>
+            <h1>🤖 Qwen2.5 VL Date/Time Extractor</h1>
+            <p>Upload your receipt image for instant date and time extraction Open Source AI</p>
         </div>
 
         <div class="upload-area" id="uploadArea">
@@ -223,7 +223,7 @@
 
         <div class="processing" id="processing">
             <div class="spinner"></div>
-            <p>Extracting date/time with ChatGPT...</p>
+            <p>Extracting date/time with Qwen2.5 VL...</p>
         </div>
 
         <div class="result" id="result">
@@ -334,10 +334,10 @@
                 const base64Image = await fileToBase64(file);
                 log('✅ Image converted successfully');
 
-                // Extract date/time with ChatGPT
-                log('🤖 Starting ChatGPT date/time extraction...');
-                const result = await extractWithChatGPT(base64Image, file.name, file.type);
-                log('✅ ChatGPT extraction completed');
+                // Extract date/time with Qwen2.5 VL
+                log('🤖 Starting Qwen2.5 VL date/time extraction...');
+                const result = await extractWithQwen(base64Image, file.name, file.type);
+                log('✅ Qwen2.5 VL extraction completed');
 
                 // Display results
                 displayResults(result);
@@ -350,9 +350,9 @@
             }
         }
 
-        // ChatGPT date/time extraction function
-        async function extractWithChatGPT(base64Image, fileName, mimeType) {
-            const response = await fetch('/api/chatgpt', {
+        // Qwen2.5 VL date/time extraction function
+        async function extractWithQwen(base64Image, fileName, mimeType) {
+            const response = await fetch('/api/qwen', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -410,8 +410,8 @@
             consoleLog.style.display = consoleLog.style.display === 'none' ? 'block' : 'none';
         };
 
-        log('🚀 ChatGPT Date/Time Extractor initialized');
-        log('🔗 Ready to call ChatGPT API');
+        log('🚀 Qwen2.5 VL Date/Time Extractor initialized');
+        log('🔗 Ready to call Qwen2.5 VL API');
     </script>
 </body>
 </html>

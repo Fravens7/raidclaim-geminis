@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   try {
-    console.log("🚀 Starting ChatGPT text extraction");
+    console.log("🚀 Starting Qwen2.5 VL text extraction");
     
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method Not Allowed' });
@@ -20,28 +20,29 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing image data' });
     }
 
-    // Check for OpenAI API key
-    const openaiApiKey = process.env.OPENAI_API_KEY;
-    console.log("🔑 API key check:", openaiApiKey ? "Present" : "Missing");
+    // Check for OpenRouter API key
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    console.log("🔑 API key check:", openRouterKey ? "Present" : "Missing");
     
-    if (!openaiApiKey) {
-      console.error("❌ No OPENAI_API_KEY found");
-      return res.status(500).json({ error: 'Missing OpenAI API key' });
+    if (!openRouterKey) {
+      console.error("❌ No OPENROUTER_API_KEY found");
+      return res.status(500).json({ error: 'Missing OpenRouter API key' });
     }
 
     const dataUrl = `data:${mimeType || 'image/jpeg'};base64,${image}`;
     console.log("🖼️ Data URL created, length:", dataUrl.length);
 
-    console.log("📡 Calling ChatGPT API...");
+    console.log("📡 Calling OpenRouter API with Qwen2.5 VL...");
     
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${openaiApiKey}`,
+        "Authorization": `Bearer ${openRouterKey}`,
+        "HTTP-Referer": "https://raidclaim-geminis.vercel.app"
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "qwen/qwen2.5-vl-32b-instruct:free",
         messages: [
           {
             role: "user",
@@ -64,16 +65,16 @@ export default async function handler(req, res) {
       }),
     });
 
-    console.log("📡 ChatGPT response status:", response.status);
+    console.log("📡 OpenRouter response status:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("❌ ChatGPT API Error:", errorText);
-      return res.status(response.status).json({ error: `ChatGPT API error: ${errorText}` });
+      console.error("❌ OpenRouter API Error:", errorText);
+      return res.status(response.status).json({ error: `OpenRouter API error: ${errorText}` });
     }
 
     const result = await response.json();
-    console.log("📄 ChatGPT raw response:", result);
+    console.log("📄 OpenRouter raw response:", result);
     
     const extractedText = result.choices?.[0]?.message?.content || '';
     console.log("✅ Date/Time extracted:", extractedText);
